@@ -1,0 +1,9 @@
+langchain
+openai
+pinecone-client
+transformers
+datasets
+torch
+faiss-cpu
+tiktoken
+unstructured
