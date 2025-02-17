@@ -3,7 +3,9 @@ from langchain_community.document_loaders import TextLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Pinecone
 from pinecone import ServerlessSpec
-
+from langchain_community.document_loaders import PyMuPDFLoader
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.embeddings import HuggingFaceEmbeddings
 
 import pinecone
 import os
@@ -30,6 +32,23 @@ def create_embedding():
     print("Embedding created successfully")
     return docs, embeddings  
 
+
+def create_pdf_embedding():
+    """Create embedding using Hugging Face embeddings from a PDF file"""
+
+    # Load PDF document
+    loader = PyMuPDFLoader('dataset/dataset_one.pdf')
+    documents = loader.load()
+
+    # Split text into smaller chunks
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=4)
+    docs = text_splitter.split_documents(documents)
+
+    # Initialize Hugging Face embeddings
+    embeddings = HuggingFaceEmbeddings()
+
+    print("Embedding created successfully")
+    return docs, embeddings
 
 
 
@@ -75,7 +94,7 @@ def main():
     """Main function to call embedding creation"""
   
 
-    docs,embeddings = create_embedding()
+    docs,embeddings = create_pdf_embedding()
     store_embedding(docs,embeddings)
     
 if __name__ == "__main__":

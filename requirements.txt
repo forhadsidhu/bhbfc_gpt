@@ -7,3 +7,7 @@ torch
 faiss-cpu
 tiktoken
 unstructured
+langchain_community
+pymupdf
+sentence-transformers
+openai

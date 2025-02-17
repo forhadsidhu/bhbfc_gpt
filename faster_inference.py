@@ -12,8 +12,8 @@ load_dotenv()
 index_name = "langchain-demo"
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 
-# Initialize Mistral-7B-Instruct generator
-generator = pipeline("text-generation", model="mistralai/Mistral-7B-v0.1")
+# Use a smaller model for CPU inference (e.g., DistilGPT-2)
+generator = pipeline("text-generation", model="distilgpt2", device=-1)  # Use device=-1 for CPU
 
 def search_pinecone(query, index_name="langchain-demo"):
     """Search Pinecone for the most relevant document to the query."""
@@ -36,12 +36,12 @@ def search_pinecone(query, index_name="langchain-demo"):
     retrieved_texts = [result['metadata']['text'] for result in search_results['matches']]
     return " ".join(retrieved_texts) if retrieved_texts else "No relevant information found."
 
-def generate_response_with_mistral(retrieved_text, user_input):
-    """Generate a refined response using Mistral-7B-Instruct with enhanced prompt engineering."""
+def generate_response_with_generator(retrieved_text, user_input):
+    """Generate a refined response using a smaller model (e.g., DistilGPT-2) with enhanced prompt engineering."""
     
-    # Enhanced few-shot prompt
+    # Enhanced prompt
     prompt = f"""
-    You are an AI assistant providing deatils about bangladesh house building finance corporation.
+    You are an AI assistant providing details about the Bangladesh House Building Finance Corporation.
 
     User Query: "{user_input}"
     Retrieved Information: "{retrieved_text}"
@@ -50,19 +50,18 @@ def generate_response_with_mistral(retrieved_text, user_input):
     """
 
     # Generate response
-    response = generator(prompt, max_length=150, num_return_sequences=1, do_sample=True)
+    response = generator(prompt, max_length=153, num_return_sequences=1, do_sample=True)
 
-    # Extract text
+    # Extract and return text
     generated_text = response[0]['generated_text'].strip()
     return generated_text
 
 def main():
     """Main function to handle user queries and generate responses."""
-    user_input = "How many loan option available in BHBFC? " # Dynamic user input
+    user_input = "How many loan options are available in BHBFC?"  # Dynamic user input
     retrieved_text = search_pinecone(user_input)
-    print(retrieved_text)
 
-    response = generate_response_with_mistral(retrieved_text, user_input)
+    response = generate_response_with_generator(retrieved_text, user_input)
     print("\nChatbot Response:", response)
 
 if __name__ == "__main__":

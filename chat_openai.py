@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from pinecone import Pinecone
-from transformers import pipeline
+import openai  # OpenAI API
 
 # Load environment variables
 load_dotenv()
@@ -12,8 +12,8 @@ load_dotenv()
 index_name = "langchain-demo"
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 
-# Initialize Mistral-7B-Instruct generator
-generator = pipeline("text-generation", model="mistralai/Mistral-7B-v0.1")
+# OpenAI API Key
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 def search_pinecone(query, index_name="langchain-demo"):
     """Search Pinecone for the most relevant document to the query."""
@@ -36,33 +36,37 @@ def search_pinecone(query, index_name="langchain-demo"):
     retrieved_texts = [result['metadata']['text'] for result in search_results['matches']]
     return " ".join(retrieved_texts) if retrieved_texts else "No relevant information found."
 
-def generate_response_with_mistral(retrieved_text, user_input):
-    """Generate a refined response using Mistral-7B-Instruct with enhanced prompt engineering."""
+def generate_response_with_openai(retrieved_text, user_input):
+    """Generate a refined response using OpenAI GPT."""
     
     # Enhanced few-shot prompt
     prompt = f"""
-    You are an AI assistant providing deatils about bangladesh house building finance corporation.
+    You are an AI assistant providing information about Bangladesh House Building Finance Corporation (BHBFC).
 
     User Query: "{user_input}"
     Retrieved Information: "{retrieved_text}"
 
-    Based on the retrieved information, provide a brief yet informative response:
+    Based on the retrieved information, provide a concise and informative response:
     """
 
-    # Generate response
-    response = generator(prompt, max_length=150, num_return_sequences=1, do_sample=True)
+    # OpenAI GPT API call
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # You can use "gpt-4" for better accuracy
+        messages=[{"role": "system", "content": "You are a helpful AI assistant."},
+                  {"role": "user", "content": prompt}],
+        max_tokens=150
+    )
 
-    # Extract text
-    generated_text = response[0]['generated_text'].strip()
-    return generated_text
+    # Extract response text
+    return response["choices"][0]["message"]["content"].strip()
 
 def main():
     """Main function to handle user queries and generate responses."""
-    user_input = "How many loan option available in BHBFC? " # Dynamic user input
+    user_input = "How many loan options are available in BHBFC?"  # Dynamic user input
     retrieved_text = search_pinecone(user_input)
-    print(retrieved_text)
+    print("\nRetrieved Text:", retrieved_text)
 
-    response = generate_response_with_mistral(retrieved_text, user_input)
+    response = generate_response_with_openai(retrieved_text, user_input)
     print("\nChatbot Response:", response)
 
 if __name__ == "__main__":
